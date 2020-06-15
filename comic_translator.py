@@ -2,8 +2,7 @@ import unidecode
 from googletrans import Translator
 import cv2 as cv
 import pytesseract as ocr
-from pre_processing import *
-import requests
+from pre_processing import get_grayscale
 import sys
 if sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
     try:
