@@ -31,10 +31,14 @@ class ComicTranslator:
                 x, y, w, h = int(b[6]), int(b[7]), int(b[8]), int(b[9])
                 cv.rectangle(img, (x, y), (w+x, h+y), (255, 255, 255), -1)
                 word = b[11]
-                word_translated = translator.translate(
-                    text=word)  # tranlation
-                word_translated = unidecode.unidecode(
-                    word_translated)  # remove weird shit
+                try:
+                    word_translated = translator.translate(
+                        text=word)  # tranlation
+                    word_translated = unidecode.unidecode(
+                        word_translated)  # remove weird shit
+                except ValueError as err:
+                    print(str(err))
+                    continue
                 cv.putText(img, word_translated, (x+10, y+40),
                            font, 1, (0, 0, 0), 1)  # put text on the screen
                           
