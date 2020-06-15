@@ -17,10 +17,13 @@ arguments = parser.parse_args()
 
 
 def get_page_numbers(page_range):
+    if len(page_range) == 1:
+        return [int(page_range), int(page_range)+1]
     return page_range.split('-')
 
 
 initial_page, final_page = get_page_numbers(arguments.page_range)
+
 
 comic = ComicTranslator(
     arguments.target_lang, arguments.file, int(initial_page), int(final_page))
