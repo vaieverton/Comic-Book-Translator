@@ -1,8 +1,10 @@
 import unidecode
-from googletrans import Translator
+from PIL import Image
+from translate import Translator
 import cv2 as cv
 import pytesseract as ocr
-from pre_processing import get_grayscale
+from pre_processing import get_grayscale, thresholding
+import numpy as np
 import sys
 if sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
     try:
@@ -21,8 +23,8 @@ class ComicTranslator:
         self.final_page = final_page
 
     def put_text_page(self, data, img):
-        translator = Translator()
-        font = cv.FONT_HERSHEY_SIMPLEX
+        font = cv.FONT_HERSHEY_COMPLEX_SMALL
+        translator = Translator(to_lang=self.target_lang)
         for x, b in enumerate(data.splitlines()):
             if x != 0:
                 b = b.split()
@@ -38,12 +40,13 @@ class ComicTranslator:
                 except ValueError as err:
                     print(str(err))
                     continue
-                cv.putText(img, word_translated, (x+10, y+40),
+                cv.putText(img, word_translated, (x-7, y+20),
                            font, 1, (0, 0, 0), 1)  # put text on the screen
                           
     # function that read the image with pytesseract
     def get_data_from_file(self, img):
-        data = ocr.image_to_data(img)
+        custom_config = r'--oem 3 --psm 4'
+        data = ocr.image_to_data(img, lang="eng", config=custom_config)
         print(data)
         return data
         
@@ -55,8 +58,8 @@ class ComicTranslator:
         # loop through every page and translate it
         while self.initial_page < self.final_page:
             num = str(self.initial_page)
-            img = cv.imread(self.file)
-            img = get_grayscale(img)
+            img = Image.open(self.file)
+            img = get_grayscale(np.float32(img))
 
             data = self.get_data_from_file(img)
             self.put_text_page(data, img)
