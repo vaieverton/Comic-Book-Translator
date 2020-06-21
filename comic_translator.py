@@ -1,58 +1,72 @@
-import cv2 as cv
-import pytesseract
-pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
-from googletrans import Translator
-translator = Translator()
 import unidecode
+from PIL import Image
+from translate import Translator
+import cv2 as cv
+import pytesseract as ocr
+from pre_processing import get_grayscale, thresholding
+import numpy as np
+import sys
+if sys.platform.startswith('win32') or sys.platform.startswith('cygwin'):
+    try:
+        ocr.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+    except FileNotFoundError as err:
+        raise (
+            'Se você está utilizando o sistema Windows, favor instalar o Tesseract-OCR',
+            err)
 
-# Here you define your native language
-# "ko" = korean | "en" = english | "ar" = arabic |
-# In my case "pt" for portuguese
-targeted_lang= "pt"
 
-# main function to perform the translation
+class ComicTranslator:
+    def __init__(self, target_lang, file, initial_page, final_page):
+        self.target_lang = target_lang
+        self.file = file
+        self.initial_page = initial_page
+        self.final_page = final_page
 
-
-def put_text_page(data, img):
-    font = cv.FONT_HERSHEY_SIMPLEX
-    for x,b in enumerate(data.splitlines()):
-        if x != 0:
-           b = b.split()
-           if len(b)==12:
-                x,y,w,h = int(b[6]), int(b[7]), int(b[8]), int(b[9])
-                cv.rectangle(img,(x , y), (w+x, h+y), (255,255,255), -1)
+    def put_text_page(self, data, img):
+        font = cv.FONT_HERSHEY_COMPLEX_SMALL
+        translator = Translator(to_lang=self.target_lang)
+        for x, b in enumerate(data.splitlines()):
+            if x != 0:
+                b = b.split()
+            if len(b) == 12:
+                x, y, w, h = int(b[6]), int(b[7]), int(b[8]), int(b[9])
+                cv.rectangle(img, (x, y), (w+x, h+y), (255, 255, 255), -1)
                 word = b[11]
-                word_translated = translator.translate(text=word, dest=targeted_lang) # tranlation
-                word_translated = unidecode.unidecode(word_translated.text) # remove weird shit
-                cv.putText(img, word_translated, (x+10, y+40), font, 1, (0, 0, 0), 1) # put text on the screen
+                try:
+                    word_translated = translator.translate(
+                        text=word)  # tranlation
+                    word_translated = unidecode.unidecode(
+                        word_translated)  # remove weird shit
+                except ValueError as err:
+                    print(str(err))
+                    continue
+                cv.putText(img, word_translated, (x-7, y+20),
+                           font, 1, (0, 0, 0), 1)  # put text on the screen
+                          
+    # function that read the image with pytesseract
+    def get_data_from_file(self, img):
+        custom_config = r'--oem 3 --psm 4'
+        data = ocr.image_to_data(img, lang="eng", config=custom_config)
+        print(data)
+        return data
+        
+    def run(self):
+        # here you define the number of the comic page with want to start translating
+        # and the final page number
+        # in my case, page 2 | page 1
 
-# function that read the image with pytesseract
-def read_text(img):
-    data = pytesseract.image_to_data(img)
-    print(data)
-    return data
+        # loop through every page and translate it
+        while self.initial_page < self.final_page:
+            num = str(self.initial_page)
+            img = Image.open(self.file)
+            img = get_grayscale(np.float32(img))
 
-def main():
-    # here you define the number of the comic page with want to start translating
-    # and the final page number
-    # in my case, page 2 | page 10
-    number_initial_page = 2
-    number_final_page = 3
+            data = self.get_data_from_file(img)
+            self.put_text_page(data, img)
 
-    # loop through every page and translate it
-    while number_initial_page < number_final_page:
-        num = str(number_initial_page)
-        img = cv.imread('Dexter Down Under 002-00'+num+'.jpg')
-        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+            cv.imwrite('Page Translated'+num+'.png', img)
+            print("PAGE "+num+" COMPLETED")
 
-        data = read_text(img)
-        put_text_page(data, img)
+            self.initial_page += 1
 
-        cv.imwrite('Page Translated'+num+'.png', img)
-        print("PAGE "+num+" COMPLETED")
-
-        number_initial_page += 1
-
-    print('COMIC-BOOK TRANSLATED SUCCESSFULLY!')
-
-main()
+        print('COMIC-BOOK TRANSLATED SUCCESSFULLY!')
