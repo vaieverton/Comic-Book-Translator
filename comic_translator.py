@@ -1,6 +1,5 @@
 import cv2 as cv
 import pytesseract
-pytesseract.pytesseract.tesseract_cmd = 'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 from googletrans import Translator
 translator = Translator()
 import unidecode
@@ -9,6 +8,9 @@ import unidecode
 # "ko" = korean | "en" = english | "ar" = arabic |
 #  No nosso caso, "pt" - Português
 targeted_lang= "pt"
+
+font_size = 0.5
+
 
 # função principal para traduzir a HQ
 def put_text_page(data, img):
@@ -27,7 +29,7 @@ def put_text_page(data, img):
                 
                 word_translated = unidecode.unidecode(word_translated.text) # Formata o texto
                 
-                cv.putText(img, word_translated, (x+10, y+40), font, 1, (0, 0, 0), 1) # Insere o texto traduzido na tela
+                cv.putText(img, word_translated, (x+0, y), font, 0.3, (0, 0, 0), 1) # Insere o texto traduzido na tela
 
 # função que extrai o texto da tela com tesseract ocr
 def read_text(img):
@@ -40,19 +42,21 @@ def main():
     # Digite o numero da ultima pagina
     
     number_initial_page = 1
-    number_final_page = 8
+    number_final_page = 2
 
     # loop por cada página e traduza-a..
     while number_initial_page < number_final_page:
         num = str(number_initial_page)
-        img = cv.imread('nome_hq_page_'+num+'.jpg')
-        img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        orig_img = cv.imread('hq-01.jpg')
+        img = cv.cvtColor(orig_img, cv.COLOR_BGR2GRAY)
+        img = cv.medianBlur(img, 1)
+        img = cv.threshold(img, 0, 255, cv.THRESH_BINARY  + cv.THRESH_OTSU)[1]
 
         data = read_text(img)
-        put_text_page(data, img)
+        put_text_page(data, orig_img)
 
 
-        cv.imwrite('Página Traduzida'+num+'.png', img)
+        cv.imwrite('Página Traduzida'+num+'.png', orig_img)
         print("Página "+num+" Traduzida.")
 
         number_initial_page += 1
