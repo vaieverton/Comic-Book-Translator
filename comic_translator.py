@@ -47,7 +47,7 @@ def main():
     # loop por cada página e traduza-a..
     while number_initial_page < number_final_page:
         num = str(number_initial_page)
-        orig_img = cv.imread('hq-01.jpg')
+        orig_img = cv.imread('hq-'+num+'.jpg')
         img = cv.cvtColor(orig_img, cv.COLOR_BGR2GRAY)
         img = cv.medianBlur(img, 1)
         img = cv.threshold(img, 0, 255, cv.THRESH_BINARY  + cv.THRESH_OTSU)[1]
