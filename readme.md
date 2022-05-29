@@ -29,6 +29,13 @@ orig_img = cv.imread('hq-'+num+'.jpg')
 ```bash
 python3 comic_translator_py
 ```
+## Results
+![alt text](https://camo.githubusercontent.com/f9841da613b3cd8d5dd220621198e1dcb7a719eec1e3cb97daf457060b7a86bd/68747470733a2f2f692e696d6775722e636f6d2f5654454b436b722e706e67)
+
+![alt text](results/hq-01.jpg)
+![alt text](results/hq-01-translated.png)
+
+
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
